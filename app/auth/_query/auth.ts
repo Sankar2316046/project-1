@@ -50,3 +50,18 @@ export const useSignUpWithEmailAndPassword = (): UseMutationResult<
     },
   });
 };
+
+export const useLogout = (): UseMutationResult<void, Error, void> => {
+  return useMutation({
+    mutationFn: async () => {
+      await authService.logout();
+    },
+    onSuccess: () => {
+      toast.success("Logged out successfully!");
+    },
+    onError: (error: Error) => {
+      console.error("Logout error:", error);
+      toast.error(error.message || "Logout failed. Please try again.");
+    },
+  });
+};
