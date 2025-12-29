@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLoginWithEmailAndPassword } from "../_query/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -15,12 +15,20 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/shared/provider/authContext";
 
 const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const router =  useRouter();
   const loginWithEmailAndPassword = useLoginWithEmailAndPassword();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,7 +61,7 @@ const LoginPage = () => {
       {
         onSuccess: () => {
           toast.success("Login successful");
-          router.push('/')
+          router.push('/dashboard')
         },
         onError: () => {
           toast.error("Login failed");
