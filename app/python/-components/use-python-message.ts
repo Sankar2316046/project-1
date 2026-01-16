@@ -1,30 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+
+interface Question {
+  question: string;
+  options: string[];
+  correct_answer: string;
+  topic: string;
+  difficulty: string;
+}
 
 export function usePythonMessage() {
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchMessage = async () => {
+  const generate = async (params: any) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:5000/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+      const data = await response.json();
       try {
-        const response = await fetch('http://localhost:8000/hello', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: 'Sankar' }),
-        });
-        const data = await response.json();
-        setMessage(data.message);
-      } catch (error) {
-        setMessage('Error: Could not connect to FastAPI');
-      } finally {
-        setLoading(false);
+        const parsedOutput = JSON.parse(data.output);
+        setQuestions(parsedOutput.questions);
+      } catch (parseError) {
+        setError(`Failed to parse response: ${data.output}`);
       }
-    };
+    } catch (err) {
+      setError('Error: Could not generate questions');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchMessage();
-  }, []);
-
-  return { message, loading };
+  return { questions, loading, error, generate };
 }
