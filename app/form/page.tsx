@@ -35,6 +35,14 @@ const formSchema = z.object({
   question_count_per_topic: z.number().min(1),
 });
 
+interface Question {
+  question: string;
+  options: string[];
+  correct_answer: string;
+  topic: string;
+  difficulty: string;
+}
+
 export default function FormPage() {
   const supabase = createClient();
   const { toast } = useToast();
@@ -43,6 +51,7 @@ export default function FormPage() {
   const [topics, setTopics] = useState<any[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ questions?: Question[], error?: string } | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,16 +117,39 @@ export default function FormPage() {
 
     console.log("Submitted Payload:", payload);
 
-    toast({
-      title: "Successfully Submitted!",
-      description: "Your configuration has been processed.",
-    });
+    setResult(null);
 
-    // reset form
-    form.reset();
-    setTopics([]);
-    setSelectedTopics([]);
-    setLoading(false);
+    try {
+      const response = await fetch('http://localhost:5000/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      const jsonStart = data.output.indexOf('{');
+      const jsonEnd = data.output.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        const jsonString = data.output.substring(jsonStart, jsonEnd + 1);
+        try {
+          const parsedOutput = JSON.parse(jsonString);
+          if (parsedOutput.questions) {
+            setResult({ questions: parsedOutput.questions });
+          } else {
+            setResult({ error: `Error from AI: ${JSON.stringify(parsedOutput)}` });
+          }
+        } catch (parseError) {
+          setResult({ error: `Failed to parse JSON: ${jsonString}` });
+        }
+      } else {
+        setResult({ error: `No JSON found in response: ${data.output}` });
+      }
+    } catch (err) {
+      setResult({ error: 'Error: Could not connect to Python server' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -225,6 +257,37 @@ export default function FormPage() {
           </Button>
         </form>
       </Form>
+
+      {result && (
+        <div className="mt-6">
+          {result.error ? (
+            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              <h3 className="font-semibold">Error</h3>
+              <p>{result.error}</p>
+            </div>
+          ) : result.questions && result.questions.length > 0 ? (
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Generated Questions</h3>
+              {result.questions.map((q, idx) => (
+                <div key={idx} className="border border-gray-300 p-4 rounded mb-4">
+                  <p className="font-medium">Question: {q.question}</p>
+                  <div className="mt-2">
+                    <p className="font-medium">Options:</p>
+                    <ul className="list-disc pl-5">
+                      {q.options.map((opt, i) => (
+                        <li key={i}>{opt}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <p className="mt-2"><span className="font-medium">Correct Answer:</span> {q.correct_answer}</p>
+                  <p><span className="font-medium">Topic:</span> {q.topic}</p>
+                  <p><span className="font-medium">Difficulty:</span> {q.difficulty}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
