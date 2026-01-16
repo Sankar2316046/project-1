@@ -13,14 +13,14 @@ export function useFormSubmit() {
     domains: any[],
     topics: any[],
     selectedTopics: string[]
-  ) => {
+  ): Promise<string | null> => {
     if (selectedTopics.length === 0) {
       toast({
         title: "Select Topics",
         description: "Please choose at least one topic.",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
     setLoading(true);
@@ -65,7 +65,7 @@ export function useFormSubmit() {
                 variant: "destructive",
               });
               setLoading(false);
-              return;
+              return null;
             }
             const total_questions = questions.length;
             const { data: testData, error: testError } = await supabase
@@ -86,7 +86,7 @@ export function useFormSubmit() {
                 variant: "destructive",
               });
               setLoading(false);
-              return;
+              return null;
             }
             const test_id = testData.id;
             const questionsToInsert = questions.map((q: Question) => ({
@@ -107,18 +107,22 @@ export function useFormSubmit() {
                 variant: "destructive",
               });
               setLoading(false);
-              return;
+              return null;
             }
             toast({
               title: "Test Created Successfully!",
               description: "Your exam questions have been saved.",
             });
+            setLoading(false);
+            return test_id;
           } else {
             toast({
               title: "AI Error",
               description: `Error from AI: ${JSON.stringify(parsedOutput)}`,
               variant: "destructive",
             });
+            setLoading(false);
+            return null;
           }
         } catch (parseError) {
           toast({
@@ -126,6 +130,8 @@ export function useFormSubmit() {
             description: `Failed to parse JSON: ${jsonString}`,
             variant: "destructive",
           });
+          setLoading(false);
+          return null;
         }
       } else {
         toast({
@@ -133,6 +139,8 @@ export function useFormSubmit() {
           description: `No JSON found in response: ${data.output}`,
           variant: "destructive",
         });
+        setLoading(false);
+        return null;
       }
     } catch (err) {
       toast({
@@ -140,8 +148,8 @@ export function useFormSubmit() {
         description: 'Error: Could not connect to Python server',
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
+      return null;
     }
   };
 

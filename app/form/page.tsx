@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,7 @@ const formSchema = z.object({
 });
 
 export default function FormPage() {
+  const router = useRouter();
   const domains = useDomains();
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const { submitForm, loading } = useFormSubmit();
@@ -52,7 +54,10 @@ export default function FormPage() {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await submitForm(values, domains, topics, selectedTopics);
+    const testId = await submitForm(values, domains, topics, selectedTopics);
+    if (testId) {
+      router.push(`/test/${testId}`);
+    }
   };
 
   return (
