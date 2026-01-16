@@ -120,3 +120,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes float3d {
+  0% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+  25% { transform: translateY(-20px) rotateX(90deg) rotateY(90deg); }
+  50% { transform: translateY(0px) rotateX(180deg) rotateY(180deg); }
+  75% { transform: translateY(20px) rotateX(270deg) rotateY(270deg); }
+  100% { transform: translateY(0px) rotateX(360deg) rotateY(360deg); }
+}
+
+.animate-float3d { animation: float3d 8s ease-in-out infinite; }
