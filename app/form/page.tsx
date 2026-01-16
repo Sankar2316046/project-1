@@ -25,12 +25,13 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  domain_id: z.string().min(1, "Select a domain"),
-  difficulty: z.string().min(1, "Select difficulty"),
+  domain_id: z.string().min(1),
+  difficulty: z.string().min(1),
   question_count_per_topic: z.number().min(1),
 });
 
@@ -52,25 +53,25 @@ export default function FormPage() {
     },
   });
 
-  // fetch domain list
+  // fetch domains
   useEffect(() => {
     supabase.from("domains").select("*").then(({ data }) => {
       if (data) setDomains(data);
     });
   }, []);
 
-  // fetch topics on domain change
+  // fetch topics based on domain
   useEffect(() => {
-    const dom = form.watch("domain_id");
-    if (!dom) return;
+    const domainId = form.watch("domain_id");
+    if (!domainId) return;
 
     supabase
       .from("topics")
       .select("*")
-      .eq("domain_id", dom)
+      .eq("domain_id", domainId)
       .then(({ data }) => {
         if (data) setTopics(data);
-        setSelectedTopics([]); // reset topics on domain change
+        setSelectedTopics([]);
       });
   }, [form.watch("domain_id")]);
 
@@ -90,44 +91,33 @@ export default function FormPage() {
       return;
     }
 
+    setLoading(true);
+
+    // convert id values to actual names
+    const domainName = domains.find((d) => d.id === values.domain_id)?.name || "";
+    const topicNames = selectedTopics
+      .map((id) => topics.find((t) => t.id === id)?.name)
+      .filter(Boolean);
+
     const payload = {
-      domain_id: values.domain_id,
-      topic_ids: selectedTopics,
+      domain: domainName,
+      topics: topicNames,
       difficulty: values.difficulty,
       question_count_per_topic: values.question_count_per_topic,
     };
 
-    setLoading(true);
-
-    const { error } = await supabase
-      .from("test_configs")
-      .insert(payload)
-      .select()
-      .single();
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to store config!",
-        variant: "destructive",
-      });
-      console.error(error);
-      return;
-    }
-
-    console.log("Payload:", payload);
+    console.log("Submitted Payload:", payload);
 
     toast({
-      title: "Submitted Successfully 🎉",
-      description: "Test configuration saved!",
+      title: "Successfully Submitted!",
+      description: "Your configuration has been processed.",
     });
 
     // reset form
     form.reset();
     setTopics([]);
     setSelectedTopics([]);
+    setLoading(false);
   };
 
   return (
@@ -163,7 +153,7 @@ export default function FormPage() {
             )}
           />
 
-          {/* TOPICS BADGE UI */}
+          {/* TOPICS */}
           {form.watch("domain_id") && (
             <div className="space-y-2">
               <FormLabel>Select Topics</FormLabel>
@@ -206,7 +196,7 @@ export default function FormPage() {
             )}
           />
 
-          {/* QUESTIONS PER TOPIC */}
+          {/* QUESTIONS */}
           <FormField
             control={form.control}
             name="question_count_per_topic"
@@ -224,11 +214,10 @@ export default function FormPage() {
             )}
           />
 
-          {/* SUBMIT BUTTON */}
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="animate-spin mr-2 h-4 w-4" /> Submitting...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
               </>
             ) : (
               "Submit"
