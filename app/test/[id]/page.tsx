@@ -1,12 +1,18 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@lib/supabase";
+import { useRef } from "react";
+
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+
+import { Loader2, Clock, CheckCircle } from "lucide-react";
 
 interface Question {
   id: string;
@@ -16,23 +22,27 @@ interface Question {
   correct_answer?: string;
 }
 
+const QUESTION_TIME = 10; // seconds
+
 export default function TestPage() {
   const params = useParams();
   const testId = params.id as string;
   const supabase = createClient();
   const { toast } = useToast();
+const autoNextLocked = useRef(false);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
   const [index, setIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [resultView, setResultView] = useState<any>(null);
 
+  const current = questions[index] ?? null;
 
-
-  const current = questions[index];
-
+  /* ================= FETCH QUESTIONS ================= */
   useEffect(() => {
     const fetchQuestions = async () => {
       const { data, error } = await supabase
@@ -40,8 +50,12 @@ export default function TestPage() {
         .select("id, question_text, options, topic, correct_answer")
         .eq("test_id", testId);
 
-      if (error || !data) {
-        toast({ title: "Error", description: "Failed to load questions.", variant: "destructive" });
+      if (error || !data || data.length === 0) {
+        toast({
+          title: "Error",
+          description: "No questions found for this test.",
+          variant: "destructive",
+        });
       } else {
         setQuestions(data);
       }
@@ -52,23 +66,77 @@ export default function TestPage() {
     fetchQuestions();
   }, [testId, supabase, toast]);
 
-  // TIMER EFFECT
- 
-  const handleAnswerChange = (questionId: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  /* ================= TIMER (FIXED & SAFE) ================= */
+useEffect(() => {
+  if (resultView) return;
+  if (!questions.length) return;
+  if (!current) return;
+
+  autoNextLocked.current = false;
+  setTimeLeft(QUESTION_TIME);
+
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => {
+      if (prev <= 1) {
+        clearInterval(timer);
+
+        // 🔒 LOCK prevents double execution
+        if (!autoNextLocked.current) {
+          autoNextLocked.current = true;
+          handleNext(true);
+        }
+
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [index, questions.length, resultView]);
+
+
+  /* ================= ANSWER HANDLING ================= */
+  const handleAnswerChange = (value: string) => {
+    if (!current) return;
+
+    setAnswers((prev) => ({
+      ...prev,
+      [current.id]: value,
+    }));
   };
 
+  /* ================= NEXT / AUTO NEXT ================= */
+const handleNext = (auto = false) => {
+  if (submitting || resultView) return;
+
+  if (index === questions.length - 1) {
+    handleSubmit(auto);
+    return;
+  }
+
+  setIndex((prev) => prev + 1);
+};
+
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (auto = false) => {
     setSubmitting(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
-      toast({ title: "Auth Error", description: "Please log in.", variant: "destructive" });
+      toast({
+        title: "Authentication Error",
+        description: "Please login again.",
+        variant: "destructive",
+      });
       setSubmitting(false);
       return;
     }
 
-    // INSERT USER ANSWERS
     await supabase.from("user_answers").insert(
       questions.map((q) => ({
         test_id: testId,
@@ -77,14 +145,15 @@ export default function TestPage() {
       }))
     );
 
-    // FETCH CORRECT ANSWERS
     const { data: correctData } = await supabase
       .from("questions")
       .select("id, correct_answer, topic")
       .eq("test_id", testId);
 
     const correctMap: Record<string, string> = {};
-    correctData?.forEach((q) => (correctMap[q.id] = q.correct_answer));
+    correctData?.forEach((q) => {
+      if (q.correct_answer) correctMap[q.id] = q.correct_answer;
+    });
 
     let correctCount = 0;
     const topicStats: Record<string, { correct: number; total: number }> = {};
@@ -93,12 +162,17 @@ export default function TestPage() {
       const isCorrect = answers[q.id] === correctMap[q.id];
       if (isCorrect) correctCount++;
 
-      if (!topicStats[q.topic]) topicStats[q.topic] = { correct: 0, total: 0 };
+      if (!topicStats[q.topic]) {
+        topicStats[q.topic] = { correct: 0, total: 0 };
+      }
+
       topicStats[q.topic].total++;
       if (isCorrect) topicStats[q.topic].correct++;
     });
 
-    const score = Number(((correctCount / questions.length) * 100).toFixed(2));
+    const score = Number(
+      ((correctCount / questions.length) * 100).toFixed(2)
+    );
 
     const { data: testRow } = await supabase
       .from("test")
@@ -106,10 +180,9 @@ export default function TestPage() {
       .eq("id", testId)
       .single();
 
-    const domain = testRow?.domain ?? "";
-
-    const raw = {
+    await supabase.from("test_results").insert({
       test_id: testId,
+      domain: testRow?.domain ?? "",
       total_questions: questions.length,
       correct_answers: correctCount,
       score_percentage: score,
@@ -123,85 +196,157 @@ export default function TestPage() {
           },
         ])
       ),
-    };
-
-    await supabase.from("test_results").insert({
-      test_id: raw.test_id,
-      domain,
-      total_questions: raw.total_questions,
-      correct_answers: raw.correct_answers,
-      score_percentage: raw.score_percentage,
-      topic_breakdown: raw.topic_breakdown,
     });
 
     const aiJSON = {
-      domain,
-      overall_score: raw.score_percentage,
-      total_questions: raw.total_questions,
-      topic_scores: raw.topic_breakdown,
+      domain: testRow?.domain ?? "",
+      overall_score: score,
+      total_questions: questions.length,
+      topic_scores: Object.fromEntries(
+        Object.entries(topicStats).map(([topic, t]) => [
+          topic,
+          {
+            correct: t.correct,
+            total: t.total,
+            percentage: Number(((t.correct / t.total) * 100).toFixed(2)),
+          },
+        ])
+      ),
     };
 
-    console.log("=== RAW RESULT ===", raw);
     console.log("=== AI JSON FOR VARUN ===", aiJSON);
 
     if (!auto) {
-      toast({ title: "Test Submitted!", description: `Score: ${score}%` });
+      toast({
+        title: "Test Submitted",
+        description: `Score: ${score}%`,
+      });
     }
 
-    setResultView({ raw, aiJSON });
+    setResultView({ score, topicStats });
     setSubmitting(false);
   };
 
+  /* ================= LOADING ================= */
   if (loading) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin h-8 w-8" /></div>;
-  }
-
-  if (resultView) {
     return (
-      <div className="max-w-2xl mx-auto p-6 space-y-4">
-        <h2 className="text-2xl font-semibold">Test Results</h2>
-
-        <p>You answered {resultView.raw.correct_answers} out of {resultView.raw.total_questions} questions correctly.</p>
-
-        <p>Score: {resultView.raw.score_percentage.toFixed(2)}%</p>
-
-        <h3 className="font-semibold">Topic-wise Scores:</h3>
-
-        {Object.entries(resultView.raw.topic_breakdown).map(([topic, score]: any) => (
-          <p key={topic}>{topic}: {score.correct}/{score.total} ({score.percentage.toFixed(2)}%)</p>
-        ))}
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
       </div>
     );
   }
 
+  /* ================= RESULT VIEW ================= */
+  if (resultView) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-indigo-950 flex items-center justify-center p-6">
+        <Card className="max-w-xl w-full bg-zinc-950 border-zinc-800">
+          <CardHeader className="text-center space-y-2">
+            <CheckCircle className="mx-auto h-10 w-10 text-green-500" />
+            <h2 className="text-2xl font-semibold text-white">
+              Test Completed
+            </h2>
+            <p className="text-zinc-400">
+              Score: {resultView.score}%
+            </p>
+          </CardHeader>
 
+          <CardContent className="space-y-4">
+            {Object.entries(resultView.topicStats).map(
+              ([topic, t]: any) => (
+                <div key={topic}>
+                  <div className="flex justify-between text-sm text-zinc-300">
+                    <span>{topic}</span>
+                    <span>
+                      {t.correct}/{t.total}
+                    </span>
+                  </div>
+                  <Progress value={(t.correct / t.total) * 100} />
+                </div>
+              )
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  /* ================= SAFETY GUARD ================= */
+  if (!current) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  /* ================= QUESTION VIEW ================= */
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-
-      <div className="flex justify-between items-center">
-        <span className="text-gray-600">Question {index + 1}/{questions.length}</span>
-      </div>
-
-      <p className="font-medium">{current.question_text}</p>
-
-      <RadioGroup value={answers[current.id] || ""} onValueChange={(v) => handleAnswerChange(current.id, v)}>
-        {current.options.map((opt, i) => (
-          <div key={i} className="flex items-center space-x-2">
-            <RadioGroupItem id={`opt-${i}`} value={opt} />
-            <Label htmlFor={`opt-${i}`}>{opt}</Label>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 flex items-center justify-center px-4">
+      <Card className="max-w-3xl w-full bg-zinc-950 border-zinc-800 shadow-xl">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-between items-center text-sm text-zinc-400">
+            <span>
+              Question {index + 1} / {questions.length}
+            </span>
+            <div className="flex items-center gap-2 text-indigo-400">
+              <Clock className="h-4 w-4" />
+              <span>{timeLeft}s</span>
+            </div>
           </div>
-        ))}
-      </RadioGroup>
 
-      <div className="flex justify-between">
-        <Button onClick={() => setIndex(index - 1)} disabled={index === 0}>Prev</Button>
-        {index < questions.length - 1 ?
-          <Button onClick={() => setIndex(index + 1)}>Next</Button> :
-          <Button onClick={() => handleSubmit()} disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit"}
+          <Progress value={((index + 1) / questions.length) * 100} />
+
+          <p className="text-lg font-medium text-white">
+            {current.question_text}
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <RadioGroup
+            value={answers[current.id] || ""}
+            onValueChange={handleAnswerChange}
+            className="space-y-3"
+          >
+            {current.options.map((opt, i) => {
+              const selected = answers[current.id] === opt;
+
+              return (
+                <div
+                  key={i}
+                  className={`
+                    flex items-center space-x-3 rounded-lg border p-4 cursor-pointer
+                    transition-all
+                    ${
+                      selected
+                        ? "border-indigo-500 bg-indigo-500/10 shadow-md"
+                        : "border-zinc-800 hover:border-indigo-400"
+                    }
+                  `}
+                >
+                  <RadioGroupItem value={opt} id={`opt-${i}`} />
+                  <Label
+                    htmlFor={`opt-${i}`}
+                    className="text-zinc-200 cursor-pointer"
+                  >
+                    {opt}
+                  </Label>
+                </div>
+              );
+            })}
+          </RadioGroup>
+
+          <Button
+            className="w-full bg-indigo-600 hover:bg-indigo-500"
+            onClick={() => handleNext(false)}
+            disabled={submitting}
+          >
+            {index === questions.length - 1
+              ? "Submit Test"
+              : "Next Question"}
           </Button>
-        }
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

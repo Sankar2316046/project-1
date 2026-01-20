@@ -14,30 +14,31 @@ import {
 } from "@/components/ui/select";
 import { Control } from "react-hook-form";
 
-interface DifficultySelectProps {
-  control: Control<any>;
-}
-
-export function DifficultySelect({ control }: DifficultySelectProps) {
+export function DifficultySelect({ control }: { control: Control<any> }) {
   return (
     <FormField
       control={control}
       name="difficulty"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>Select Difficulty</FormLabel>
+        <FormItem className="space-y-2">
+          <FormLabel className="text-zinc-300 text-sm">
+            Difficulty Level
+          </FormLabel>
+
           <FormControl>
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select difficulty" />
+              <SelectTrigger className="bg-zinc-900 border-zinc-700">
+                <SelectValue placeholder="Choose difficulty" />
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="easy">Easy</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="hard">Hard</SelectItem>
+                <SelectItem value="easy">🟢 Easy</SelectItem>
+                <SelectItem value="medium">🟡 Medium</SelectItem>
+                <SelectItem value="hard">🔴 Hard</SelectItem>
               </SelectContent>
             </Select>
           </FormControl>
+
           <FormMessage />
         </FormItem>
       )}
