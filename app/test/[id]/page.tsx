@@ -216,6 +216,25 @@ const handleNext = (auto = false) => {
 
     console.log("=== AI JSON FOR VARUN ===", aiJSON);
 
+    // Fetch AI analysis
+    let aiAnalysis = null;
+    try {
+      const response = await fetch("http://localhost:5000/skill-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          total_questions: aiJSON.total_questions,
+          topic_scores: aiJSON.topic_scores,
+        }),
+      });
+      aiAnalysis = await response.json();
+      console.log("=== AI ANALYSIS RESULT ===", aiAnalysis);
+    } catch (error) {
+      console.error("Failed to fetch AI analysis:", error);
+    }
+
     if (!auto) {
       toast({
         title: "Test Submitted",
@@ -223,7 +242,7 @@ const handleNext = (auto = false) => {
       });
     }
 
-    setResultView({ score, topicStats });
+    setResultView({ score, topicStats, aiAnalysis });
     setSubmitting(false);
   };
 
@@ -237,39 +256,151 @@ const handleNext = (auto = false) => {
   }
 
   /* ================= RESULT VIEW ================= */
-  if (resultView) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-indigo-950 flex items-center justify-center p-6">
-        <Card className="max-w-xl w-full bg-zinc-950 border-zinc-800">
-          <CardHeader className="text-center space-y-2">
-            <CheckCircle className="mx-auto h-10 w-10 text-green-500" />
-            <h2 className="text-2xl font-semibold text-white">
-              Test Completed
-            </h2>
-            <p className="text-zinc-400">
-              Score: {resultView.score}%
-            </p>
-          </CardHeader>
+if (resultView) {
+  const ai = resultView.aiAnalysis;
 
-          <CardContent className="space-y-4">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 flex items-center justify-center p-6">
+      <Card className="w-full max-w-3xl bg-zinc-950 border-zinc-800 shadow-2xl">
+        
+        {/* ================= HEADER ================= */}
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">
+                🎓 Assessment Report
+              </h2>
+              <p className="text-zinc-400 text-sm">
+                Detailed skill evaluation & AI insights
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-sm text-zinc-400">Final Score</p>
+              <p className="text-3xl font-bold text-indigo-400">
+                {resultView.score}%
+              </p>
+            </div>
+          </div>
+
+          {ai?.overall_level && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-400">Overall Level:</span>
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                {ai.overall_level}
+              </span>
+            </div>
+          )}
+        </CardHeader>
+
+        {/* ================= CONTENT ================= */}
+        <CardContent className="space-y-8">
+
+          {/* ================= TOPIC PERFORMANCE ================= */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold text-white">
+              Topic-wise Performance
+            </h3>
+
             {Object.entries(resultView.topicStats).map(
               ([topic, t]: any) => (
-                <div key={topic}>
+                <div key={topic} className="space-y-1">
                   <div className="flex justify-between text-sm text-zinc-300">
                     <span>{topic}</span>
-                    <span>
-                      {t.correct}/{t.total}
-                    </span>
+                    <span>{t.correct}/{t.total}</span>
                   </div>
                   <Progress value={(t.correct / t.total) * 100} />
                 </div>
               )
             )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+          </section>
+
+          {/* ================= AI ANALYSIS ================= */}
+          {ai && (
+            <section className="space-y-6">
+              <h3 className="text-lg font-semibold text-white">
+                AI Skill Analysis
+              </h3>
+
+              {/* Strengths */}
+              {ai.strengths?.length > 0 && (
+                <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4">
+                  <h4 className="text-green-400 font-medium mb-2">
+                    ✅ Strengths
+                  </h4>
+                  <ul className="space-y-2">
+                    {ai.strengths.map((s: any, i: number) => (
+                      <li key={i} className="text-sm text-zinc-300">
+                        <span className="font-medium text-white">
+                          {s.topic}:
+                        </span>{" "}
+                        {s.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Weaknesses */}
+              {ai.weaknesses?.length > 0 && (
+                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
+                  <h4 className="text-red-400 font-medium mb-2">
+                    ⚠️ Areas to Improve
+                  </h4>
+                  <ul className="space-y-2">
+                    {ai.weaknesses.map((w: any, i: number) => (
+                      <li key={i} className="text-sm text-zinc-300">
+                        <span className="font-medium text-white">
+                          {w.topic}:
+                        </span>{" "}
+                        {w.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {ai.recommendations?.length > 0 && (
+                <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
+                  <h4 className="text-blue-400 font-medium mb-2">
+                    📘 Recommendations
+                  </h4>
+                  <ul className="space-y-2">
+                    {ai.recommendations.map((r: any, i: number) => (
+                      <li key={i} className="text-sm text-zinc-300">
+                        <span className="font-medium text-white">
+                          {r.topic}:
+                        </span>{" "}
+                        {r.suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              {ai.next_topics?.length > 0 && (
+                <div className="bg-purple-500/5 border border-purple-500/20 rounded-lg p-4">
+                  <h4 className="text-purple-400 font-medium mb-2">
+                    🚀 Next Steps
+                  </h4>
+                  <ul className="space-y-1">
+                    {ai.next_topics.map((n: string, i: number) => (
+                      <li key={i} className="text-sm text-zinc-300">
+                        • {n}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
   /* ================= SAFETY GUARD ================= */
   if (!current) {
