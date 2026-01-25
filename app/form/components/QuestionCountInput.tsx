@@ -26,7 +26,7 @@ export function QuestionCountInput({ control }: { control: any }) {
               onChange={(e) =>
                 field.onChange(Number(e.target.value))
               }
-              className="bg-zinc-900 border-zinc-700 focus:border-indigo-500"
+              className="bg-slate-700 border-slate-600 focus:border-slate-500 text-slate-200"
             />
           </FormControl>
 

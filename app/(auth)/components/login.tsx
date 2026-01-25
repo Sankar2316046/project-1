@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/shared/provider/authContext";
+import Link from "next/link";
 
 const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
@@ -26,7 +27,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, [user, router]);
 
@@ -60,8 +61,7 @@ const LoginPage = () => {
       { email, password },
       {
         onSuccess: () => {
-          toast.success("Login successful");
-          router.push('/dashboard')
+          router.push('/')
         },
         onError: () => {
           toast.error("Login failed");
@@ -72,10 +72,10 @@ const LoginPage = () => {
 
   return (
     <div className={cn("flex flex-col gap-6")}>
-      <Card className="w-full max-w-md mx-auto mt-10">
+      <Card className="w-full max-w-md mx-auto mt-10 bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-200">Login to your account</CardTitle>
+          <CardDescription className="text-slate-400">
             Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
@@ -83,32 +83,41 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-300">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="email@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-slate-300">Password</Label>
                 </div>
                 <Input
                   id="password"
                   type="password"
                   required
                   value={password}
+                  placeholder="Enter the password"
                   onChange={(e) => setPassword(e.target.value)}
+                  className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200">
                   Login
                 </Button>
+                <p className="text-center text-slate-400">
+                  Don't have an account?{" "}
+                  <Link href="/signup" className="text-slate-300 hover:text-slate-200 underline">
+                    Sign up
+                  </Link>
+                </p>
               </div>
             </div>
           </form>

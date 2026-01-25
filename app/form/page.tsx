@@ -70,7 +70,7 @@ export default function FormPage() {
     );
 
     if (testId) {
-      router.push(`/test/${testId}`);
+      router.push(`/`);
     }
   };
 

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const SignupPage = () => {
   const [email, setEmail] = useState<string>("");
@@ -70,10 +71,10 @@ const SignupPage = () => {
 
   return (
     <div className={cn("flex flex-col gap-6")}>
-      <Card className="w-full max-w-md mx-auto mt-10">
+      <Card className="w-full max-w-md mx-auto mt-10 bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-200">Create an account</CardTitle>
+          <CardDescription className="text-slate-400">
             Enter your email below to create a new account
           </CardDescription>
         </CardHeader>
@@ -81,7 +82,7 @@ const SignupPage = () => {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-300">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -89,32 +90,43 @@ const SignupPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-slate-300">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   required
                   value={password}
+                  placeholder="Enter the password"
                   onChange={(e) => setPassword(e.target.value)}
+                  className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-slate-300">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   required
                   value={confirmPassword}
+                  placeholder="Enter the password again"
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200">
                   Sign Up
                 </Button>
+                <p className="text-center text-slate-400">
+                  Have an account?{" "}
+                  <Link href="/login" className="text-slate-300 hover:text-slate-200 underline">
+                    Login
+                  </Link>
+                </p>
               </div>
             </div>
           </form>

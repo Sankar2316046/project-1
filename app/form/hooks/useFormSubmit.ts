@@ -31,127 +31,132 @@ export function useFormSubmit() {
       .map((id) => topics.find((t) => t.id === id)?.name)
       .filter(Boolean);
 
-    const payload = {
-      domain: domainName,
-      topics: topicNames,
-      difficulty: values.difficulty,
-      question_count_per_topic: values.question_count_per_topic,
-    };
+      const payload = {
+    domain: domainName,
+    topics: topicNames,
+    difficulty: values.difficulty,
+    question_count_per_topic: values.question_count_per_topic,
+  };
 
-    console.log("Submitted Payload:", payload);
+  const expectedQuestions = selectedTopics.length * values.question_count_per_topic;
+  console.log('Expected questions:', expectedQuestions);
 
-    try {
-      const response = await fetch('http://localhost:5000/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      const jsonStart = data.output.indexOf('{');
-      const jsonEnd = data.output.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        const jsonString = data.output.substring(jsonStart, jsonEnd + 1);
-        try {
-          const parsedOutput = JSON.parse(jsonString);
-          if (parsedOutput.questions) {
-            const questions = parsedOutput.questions;
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-              toast({
-                title: "Authentication Error",
-                description: "Please log in to create a test.",
-                variant: "destructive",
-              });
-              setLoading(false);
-              return null;
+  try {
+    const response = await fetch('http://localhost:5000/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.body) throw new Error('No stream');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let questions: Question[] = [];
+    let seen = new Set<string>();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';  // Keep incomplete line
+
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const obj = JSON.parse(line);
+            if (obj.done) {
+              console.log('Stream done');
+              break;
+            } else {
+              if (obj.question && !seen.has(obj.question)) {
+                seen.add(obj.question);
+                questions.push(obj as Question);
+                console.log('Questions so far:', questions.length);
+                
+              }
             }
-            const total_questions = questions.length;
-            const { data: testData, error: testError } = await supabase
-              .from('test')
-              .insert({
-                user_id: user.id,
-                domain: domainName,
-                difficulty: values.difficulty,
-                total_questions,
-                status: 'created',
-              })
-              .select()
-              .single();
-            if (testError) {
-              toast({
-                title: "Failed to create test",
-                description: testError.message,
-                variant: "destructive",
-              });
-              setLoading(false);
-              return null;
-            }
-            const test_id = testData.id;
-            const questionsToInsert = questions.map((q: Question) => ({
-              test_id,
-              question_text: q.question,
-              options: q.options,
-              correct_answer: q.correct_answer,
-              topic: q.topic,
-              difficulty: q.difficulty,
-            }));
-            const { error: questionsError } = await supabase
-              .from('questions')
-              .insert(questionsToInsert);
-            if (questionsError) {
-              toast({
-                title: "Failed to insert questions",
-                description: questionsError.message,
-                variant: "destructive",
-              });
-              setLoading(false);
-              return null;
-            }
-            toast({
-              title: "Test Created Successfully!",
-              description: "Your exam questions have been saved.",
-            });
-            setLoading(false);
-            return test_id;
-          } else {
-            toast({
-              title: "AI Error",
-              description: `Error from AI: ${JSON.stringify(parsedOutput)}`,
-              variant: "destructive",
-            });
-            setLoading(false);
-            return null;
+          } catch (e) {
+            console.warn('Parse error:', line);
           }
-        } catch (parseError) {
-          toast({
-            title: "Parsing Error",
-            description: `Failed to parse JSON: ${jsonString}`,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return null;
         }
-      } else {
-        toast({
-          title: "Response Error",
-          description: `No JSON found in response: ${data.output}`,
-          variant: "destructive",
-        });
-        setLoading(false);
-        return null;
       }
-    } catch (err) {
+      console.log(questions);
+    }
+    
+    // Insert into database
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       toast({
-        title: "Connection Error",
-        description: 'Error: Could not connect to Python server',
+        title: "Authentication Error",
+        description: "Please log in to create a test.",
         variant: "destructive",
       });
       setLoading(false);
       return null;
     }
-  };
+
+    const { data: testData, error: testError } = await supabase
+      .from('test')
+      .insert({
+        user_id: user.id,
+        domain: domainName,
+        difficulty: values.difficulty,
+        questions_per_student: values.question_count_per_topic,
+        status: 'created'
+      })
+      .select('id')
+      .single();
+
+    if (testError) {
+      console.error('Test insert error:', testError);
+      toast({
+        title: "Error",
+        description: "Failed to create test.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return null;
+    }
+
+    const testId = testData.id;
+
+    const questionInserts = questions.map(q => ({
+      test_id: testId,
+      question: q.question,
+      options: q.options,
+      correct_answer: q.correct_answer,
+      topic: q.topic,
+      difficulty: q.difficulty
+    }));
+
+    const { error: poolError } = await supabase
+      .from('question_pool')
+      .insert(questionInserts);
+
+    if (poolError) {
+      console.error('Question pool insert error:', poolError);
+      toast({
+        title: "Error",
+        description: "Failed to save questions.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return null;
+    }
+
+    setLoading(false);
+    return testId;
+  } catch (err) {
+    setLoading(false);
+   
+    
+    return null;
+  }
+};
 
   return { submitForm, loading };
 }

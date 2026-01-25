@@ -27,7 +27,7 @@ export function DifficultySelect({ control }: { control: Control<any> }) {
 
           <FormControl>
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className="bg-zinc-900 border-zinc-700">
+              <SelectTrigger className="bg-slate-800 border-slate-700">
                 <SelectValue placeholder="Choose difficulty" />
               </SelectTrigger>
 
