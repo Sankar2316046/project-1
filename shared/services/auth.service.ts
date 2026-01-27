@@ -1,17 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase";
+
+import { supabase } from "@/lib/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export class AuthService {
-    private supabase: SupabaseClient;
-
-    constructor(supabase: SupabaseClient = createClient()) {
-        this.supabase = supabase;
-    }
-
- 
-    
+  
     async logInWithEmailAndPassword(email: string, password: string) {
-        const { data, error } = await this.supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -21,12 +15,12 @@ export class AuthService {
     }
 
     async logout() {
-        const { error } = await this.supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut();
         if (error) throw error;
     }
 
     async signUpWithEmailAndPassword(email: string, password: string) {
-        const { data, error } = await this.supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });

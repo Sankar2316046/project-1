@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export interface StudentData {
   name: string;
@@ -20,11 +20,6 @@ export interface QuestionWithOrder {
 }
 
 export class StudentService {
-  private supabase: SupabaseClient;
-
-  constructor(supabase: SupabaseClient = createClient()) {
-    this.supabase = supabase;
-  }
 
   private shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
@@ -37,7 +32,7 @@ export class StudentService {
   }
 
   async createStudent(data: StudentData): Promise<string> {
-    const { data: student, error } = await this.supabase
+    const { data: student, error } = await supabase
       .from('students')
       .insert(data)
       .select('id')
@@ -49,7 +44,7 @@ export class StudentService {
 
   async createTestAttempt(testId: string, studentId: string): Promise<string> {
     // Create the attempt
-    const { data: attempt, error: attemptError } = await this.supabase
+    const { data: attempt, error: attemptError } = await supabase
       .from('student_test_attempts')
       .insert({
         test_id: testId,
@@ -63,7 +58,7 @@ export class StudentService {
     const attemptId = attempt.id;
 
     // Get total questions per student from test
-    const { data: testData, error: testError } = await this.supabase
+    const { data: testData, error: testError } = await supabase
       .from('test')
       .select('questions_per_student')
       .eq('id', testId)
@@ -76,7 +71,7 @@ export class StudentService {
     const totalQuestions = testData.questions_per_student;
 
     // Get unique topics for the test
-    const { data: questionData, error: questionError } = await this.supabase
+    const { data: questionData, error: questionError } = await supabase
       .from('question_pool')
       .select('topic')
       .eq('test_id', testId);
@@ -99,7 +94,7 @@ export class StudentService {
       const count = perTopic + (i < remainder ? 1 : 0);
 
       // Get all questions for this topic
-      const { data: allQuestions, error: topicError } = await this.supabase
+      const { data: allQuestions, error: topicError } = await supabase
         .from('question_pool')
         .select('id')
         .eq('test_id', testId)
@@ -126,7 +121,7 @@ export class StudentService {
     }));
 
     // Insert into student_questions
-    const { error: insertError } = await this.supabase
+    const { error: insertError } = await supabase
       .from('student_questions')
       .insert(studentQuestions);
 
@@ -136,7 +131,7 @@ export class StudentService {
   }
 
   async getAttemptQuestions(attemptId: string): Promise<QuestionWithOrder[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('student_questions')
       .select('question_id, question_order, selected_answer, question_pool(*)')
       .eq('attempt_id', attemptId)
@@ -157,7 +152,7 @@ export class StudentService {
   }
 
   async updateSelectedAnswer(attemptId: string, questionId: string, answer: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await supabase
       .from('student_questions')
       .update({ selected_answer: answer })
       .eq('attempt_id', attemptId)
@@ -167,7 +162,7 @@ export class StudentService {
   }
 
   async updateIsCorrect(attemptId: string, questionId: string, isCorrect: boolean): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await supabase
       .from('student_questions')
       .update({ is_correct: isCorrect })
       .eq('attempt_id', attemptId)
@@ -177,7 +172,7 @@ export class StudentService {
   }
 
   async updateAttempt(attemptId: string, updates: Partial<{ end_time: string; total_time_taken: number; score_percentage: number; time_efficiency: number; submitted_at: string }>): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await supabase
       .from('student_test_attempts')
       .update(updates)
       .eq('id', attemptId);
@@ -196,7 +191,7 @@ export class StudentService {
     total_time_taken: number;
     submitted_at: string;
   }>> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('student_test_attempts')
       .select(`
         score_percentage,
