@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabaseClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 
 export interface StudentData {
   name: string;
@@ -22,7 +22,7 @@ export interface QuestionWithOrder {
 export class StudentService {
   private supabase: SupabaseClient;
 
-  constructor(supabase: SupabaseClient = supabaseClient) {
+  constructor(supabase: SupabaseClient = createClient()) {
     this.supabase = supabase;
   }
 

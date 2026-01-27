@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabaseClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 
 export class AuthService {
     private supabase: SupabaseClient;
 
-    constructor(supabase: SupabaseClient = supabaseClient) {
+    constructor(supabase: SupabaseClient = createClient()) {
         this.supabase = supabase;
     }
 
