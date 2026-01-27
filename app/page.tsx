@@ -85,6 +85,7 @@ export default function Home() {
                     <th className="px-4 py-3 text-left">Difficulty</th>
                     <th className="px-4 py-3 text-left">Questions per student</th>
                     <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Created At</th>
                     <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
@@ -95,16 +96,24 @@ export default function Home() {
                       <td className="px-4 py-3">{test.difficulty}</td>
                       <td className="px-4 py-3">{test.questions_per_student}</td>
                       <td className="px-4 py-3">{test.status}</td>
+                      <td className="px-4 py-3">{new Date(test.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
-                        <Button
-                          onClick={() => {
-                            const url = `localhost:3001/test/${test.id}`;
-                            navigator.clipboard.writeText(url);
-                          }}
-                          className="bg-slate-600 hover:bg-slate-500 text-slate-200 px-4 py-2"
-                        >
-                          Copy Link
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              const url = `localhost:3001/test/${test.id}`;
+                              navigator.clipboard.writeText(url);
+                            }}
+                            className="bg-slate-600 hover:bg-slate-500 text-slate-200 px-4 py-2"
+                          >
+                            Copy Link
+                          </Button>
+                          <Link href={`/test/${test.id}`}>
+                            <Button className="bg-slate-600 hover:bg-slate-500 text-slate-200 px-4 py-2">
+                              View Ranking
+                            </Button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
