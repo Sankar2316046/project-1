@@ -1,9 +1,10 @@
+import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import { createClient } from "@lib/supabase";
+
 
 export function useTopics(domainId: string) {
   const [topics, setTopics] = useState<any[]>([]);
-  const supabase = createClient();
+  
 
   useEffect(() => {
     if (!domainId) {

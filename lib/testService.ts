@@ -1,6 +1,4 @@
-import { createClient } from "@/lib/supabase";
-
-const supabase = createClient();
+import { supabase } from "./supabase";
 
 export interface StudentData {
   name: string;

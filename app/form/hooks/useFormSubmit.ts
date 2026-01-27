@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { createClient } from "@lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Question } from "../types";
+import { supabase } from "@/lib/supabase";
 
 export function useFormSubmit() {
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  
   const { toast } = useToast();
 
   const submitForm = async (

@@ -5,8 +5,9 @@ import { studentService } from "@/shared/services/student.service";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Trophy, Clock, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+
 import AppLoader from "@/app/components/Loading";
+import { supabase } from "@/lib/supabase";
 
 interface Ranking {
   rank: number;
@@ -33,7 +34,7 @@ export default function TestPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const supabase = createClient();
+    
         
         // Fetch rankings
         const rankingsData = await studentService.getTestRankings(testId);

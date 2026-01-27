@@ -5,10 +5,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase";
+
 import { motion } from "framer-motion";
 import { FileText, TrendingUp, Plus, BookOpen } from 'lucide-react';
 import AppLoader from "./components/Loading";
+import { supabase } from "@/lib/supabase";
 
 interface Test {
   id: string;
@@ -23,7 +24,7 @@ interface Test {
 export default function Home() {
   const { user, loading } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
-  const supabase = createClient();
+  
 
   useEffect(() => {
     if (user) {
