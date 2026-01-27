@@ -35,7 +35,7 @@ export function useFormSubmit() {
     domain: domainName,
     topics: topicNames,
     difficulty: values.difficulty,
-    question_count_per_topic: values.question_count_per_topic,
+    question_count_per_topic: values.question_count_per_topic*3,
   };
 
   const expectedQuestions = selectedTopics.length * values.question_count_per_topic;

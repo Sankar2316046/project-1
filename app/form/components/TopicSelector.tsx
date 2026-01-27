@@ -34,7 +34,7 @@ export function TopicSelector({
                 ${
                   active
                     ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white border-transparent shadow-lg scale-[1.02]"
-                    : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-indigo-500"
+                    : "border-zinc-700 bg-slate-900 text-zinc-300 hover:border-indigo-500"
                 }
               `}
             >

@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Sparkles, GraduationCap } from 'lucide-react';
 
 const SignupPage = () => {
   const [email, setEmail] = useState<string>("");
@@ -70,19 +72,35 @@ const SignupPage = () => {
   };
 
   return (
-    <div className={cn("flex flex-col gap-6")}>
-      <Card className="w-full max-w-md mx-auto mt-10 bg-slate-900 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-slate-200">Create an account</CardTitle>
-          <CardDescription className="text-slate-400">
-            Enter your email below to create a new account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        {/* Branding */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl mb-4 shadow-lg shadow-indigo-500/50">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl text-white mb-2">AI Exam Platform</h1>
+          <p className="text-slate-400">Sign Up Portal - Intelligent Assessment System</p>
+        </div>
+
+        {/* Signup Card */}
+        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-indigo-600/20 rounded-lg">
+                <GraduationCap className="w-6 h-6 text-indigo-400" />
+              </div>
+              <h2 className="text-2xl text-white">Sign Up</h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -93,8 +111,9 @@ const SignupPage = () => {
                   className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
-              <div className="grid gap-3">
-                <Label htmlFor="password" className="text-slate-300">Password</Label>
+              
+              <div>
+                <Label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -105,8 +124,9 @@ const SignupPage = () => {
                   className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
-              <div className="grid gap-3">
-                <Label htmlFor="confirmPassword" className="text-slate-300">Confirm Password</Label>
+
+              <div>
+                <Label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -117,21 +137,29 @@ const SignupPage = () => {
                   className="bg-slate-800 border-slate-700 focus:border-slate-500 text-slate-200"
                 />
               </div>
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200">
+
+              <div className="pt-4">
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
                   Sign Up
                 </Button>
-                <p className="text-center text-slate-400">
+              </div>
+
+              <div className="text-center">
+                <p className="text-slate-400">
                   Have an account?{" "}
                   <Link href="/login" className="text-slate-300 hover:text-slate-200 underline">
                     Login
                   </Link>
                 </p>
               </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-slate-500 text-sm mt-6">
+          Powered by AI • Secure • Fair Assessment
+        </p>
+      </motion.div>
     </div>
   );
 };

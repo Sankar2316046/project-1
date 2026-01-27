@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { User } from "lucide-react";
+import { User, BookOpen, Settings, LogOut } from "lucide-react";
 import { authService } from "@/shared/services/auth.service";
 import { useRouter } from "next/navigation";
 
@@ -24,43 +24,33 @@ export function Navbar() {
   }
 
   return (
-    <nav className="bg-slate-900 shadow-md border-b border-slate-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-end h-16">
-          <div className="flex items-center">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative p-2 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors duration-200 text-slate-300 hover:text-white border border-slate-600"
-                >
-                  <User className="h-7 w-7" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 bg-slate-900 border-slate-700 shadow-lg p-4" align="end">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-slate-300" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-slate-400 text-sm font-medium truncate">Email</p>
-                      <p className="text-slate-200 text-sm truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={signOut}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 rounded transition-colors duration-200"
-                  >
-                    Logout
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+    <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl shadow-lg">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl text-white">AI Exam Platform</h1>
+              <p className="text-sm text-slate-400">Dashboard</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-white">{user?.email}</p>
+              <p className="text-sm text-slate-400">User</p>
+            </div>
+        
+            <button
+              onClick={signOut}
+              className="p-2 text-red-400 hover:text-red-300 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 }

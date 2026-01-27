@@ -34,7 +34,7 @@ export function DomainSelect({ control, domains }: { control: Control<any>; doma
                       ${
                         active
                           ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105"
-                          : "border border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                          : "bg-slate-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800"
                       }
                     `}
                   >

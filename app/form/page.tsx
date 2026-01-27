@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Brain } from "lucide-react";
+import { Loader2, Brain, ArrowLeft, Info } from "lucide-react";
 
 import { useDomains } from "./hooks/useDomains";
 import { useTopics } from "./hooks/useTopics";
@@ -23,6 +23,7 @@ import { DomainSelect } from "./components/DomainSelect";
 import { TopicSelector } from "./components/TopicSelector";
 import { DifficultySelect } from "./components/DifficultySelect";
 import { QuestionCountInput } from "./components/QuestionCountInput";
+import AppLoader from "@/app/components/Loading";
 
 const formSchema = z.object({
   domain_id: z.string().min(1),
@@ -74,26 +75,28 @@ export default function FormPage() {
     }
   };
 
+  if (domains.length === 0) {
+    return <AppLoader text="Loading Form Data" />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 flex items-center justify-center px-4">
-      <Card className="w-full max-w-3xl bg-zinc-950/80 backdrop-blur border border-zinc-800 shadow-2xl">
-        <CardHeader className="space-y-2">
-          <div className="flex items-center gap-2 text-indigo-400">
-            <Brain className="h-6 w-6" />
-            <span className="text-sm font-medium uppercase tracking-wide">
-              Skill Assessment
-            </span>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Dashboard
+        </button>
 
-          <CardTitle className="text-2xl md:text-3xl font-semibold text-white">
-            Student Skill Analyzer
-          </CardTitle>
-
-          <p className="text-zinc-400 text-sm max-w-xl">
-            Configure a personalized assessment by selecting domain,
-            topics, difficulty level, and number of questions.
-          </p>
-        </CardHeader>
+        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl md:text-3xl font-semibold text-white">
+              Create New Test
+            </CardTitle>
+            <p className="text-slate-400 mt-2">Configure AI-generated assessment parameters</p>
+          </CardHeader>
 
         <CardContent className="pt-6">
           <Form {...form}>
@@ -121,12 +124,21 @@ export default function FormPage() {
                 <QuestionCountInput control={form.control} />
               </div>
 
+              <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex gap-3">
+                <Info className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-slate-300">
+                  <p className="font-medium text-indigo-400 mb-1">AI Fairness Mode</p>
+                  <p>The system will generate extra questions to ensure each student receives a unique test, preventing answer sharing and promoting academic integrity.</p>
+                </div>
+              </div>
+
               {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={loading}
+                size="lg"
                 className="
-                  w-full h-12 text-base font-medium
+                  w-full text-base font-medium
                   bg-gradient-to-r from-indigo-600 to-violet-600
                   hover:from-indigo-500 hover:to-violet-500
                   transition-all shadow-lg shadow-indigo-600/30
@@ -135,16 +147,17 @@ export default function FormPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Generating Test...
+                    Creating Test...
                   </>
                 ) : (
-                  "Start Skill Assessment"
+                  "Create Test"
                 )}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }
