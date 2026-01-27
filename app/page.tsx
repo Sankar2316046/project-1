@@ -155,7 +155,7 @@ export default function Home() {
                       <div className="flex gap-2">
                         <Button
                           onClick={() => {
-                            const url = `localhost:3001/test/${test.id}`;
+                            const url = `https://cognify-student.vercel.app/test/${test.id}`;
                             navigator.clipboard.writeText(url);
                           }}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2"

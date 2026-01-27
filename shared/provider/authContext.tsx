@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabaseClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 
 interface AuthContextType {
   user: any | null;
@@ -18,9 +18,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const client = createClient();
     // Get current session user
     const getUser = async () => {
-      const { data } = await supabaseClient.auth.getUser();
+      const { data } = await client.auth.getUser();
       setUser(data.user ?? null);
       setLoading(false);
     };
@@ -28,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getUser();
 
     // Listen for auth changes
-    const { data: listener } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
