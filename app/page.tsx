@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FileText, TrendingUp, Plus, BookOpen } from 'lucide-react';
 import AppLoader from "./components/Loading";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseClient } from "@/lib/supabase";
 
 interface Test {
   id: string;
@@ -28,6 +28,7 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
+      const supabase = createSupabaseClient();
       supabase
         .from('test')
         .select('*')
@@ -38,7 +39,7 @@ export default function Home() {
           else setTests(data || []);
         });
     }
-  }, [user, supabase]);
+  }, [user]);
 
   const stats = [
     {

@@ -1,11 +1,12 @@
+import { createSupabaseClient } from "@/lib/supabase";
 
-import { supabase } from "@/lib/supabase";
-import { SupabaseClient } from "@supabase/supabase-js";
+
 
 export class AuthService {
-  
+    supabase = createSupabaseClient();
     async logInWithEmailAndPassword(email: string, password: string) {
-        const { data, error } = await supabase.auth.signInWithPassword({
+       
+        const { data, error } = await this.supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -15,12 +16,12 @@ export class AuthService {
     }
 
     async logout() {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await this.supabase.auth.signOut();
         if (error) throw error;
     }
 
     async signUpWithEmailAndPassword(email: string, password: string) {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await this.supabase.auth.signUp({
           email,
           password,
         });

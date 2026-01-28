@@ -7,7 +7,7 @@ import { ArrowLeft, Trophy, Clock, Target } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import AppLoader from "@/app/components/Loading";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseClient } from "@/lib/supabase";
 
 interface Ranking {
   rank: number;
@@ -29,7 +29,7 @@ export default function TestPage() {
   const [test, setTest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const supabase = createSupabaseClient(); 
   useEffect(() => {
     const fetchData = async () => {
       try {

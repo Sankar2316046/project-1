@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { createSupabaseClient } from "./supabase";
 
 export interface StudentData {
   name: string;
@@ -15,7 +15,7 @@ export interface Question {
   topic: string;
   difficulty: string;
 }
-
+const supabase = createSupabaseClient();
 export async function createStudent(data: StudentData): Promise<string> {
   const { data: student, error } = await supabase
     .from('students')
