@@ -42,13 +42,26 @@ export function useFormSubmit() {
   console.log('Expected questions:', expectedQuestions);
 
   try {
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    
-    if (!response.body) throw new Error('No stream');
+   const response = await fetch('/api/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+});
+
+if (!response.ok) {
+  toast({
+    title: "Generation Failed",
+    description: "Question generator is temporarily unavailable.",
+    variant: "destructive",
+  });
+  setLoading(false);
+  return null;
+}
+
+if (!response.body) {
+  throw new Error("No response stream");
+}
+
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
